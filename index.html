@@ -1,0 +1,280 @@
+echo "# app-autisti" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/mircofol/app-autisti.git
+git push -u origin main<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gestione Flotta Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .tab-active { color: #2563eb; border-top: 3px solid #2563eb; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans pb-24">
+
+    <!-- Schermata Caricamento -->
+    <div id="loading" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center">
+        <div class="bg-white p-8 rounded-3xl text-center shadow-2xl">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
+            <p class="font-black text-xs uppercase tracking-widest text-gray-800">Sincronizzazione Cloud...</p>
+        </div>
+    </div>
+
+    <div class="max-w-md mx-auto">
+        <!-- HEADER FISSO -->
+        <header class="bg-slate-900 text-white p-6 pt-10 rounded-b-[40px] shadow-xl sticky top-0 z-40">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-2xl font-black italic tracking-tighter">FLEET MANAGER</h1>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest flex items-center gap-1">
+                        <i data-lucide="cloud-lightning" size="10"></i> Microsoft 365 Business
+                    </p>
+                </div>
+                <div class="bg-blue-600 p-2 rounded-xl"><i data-lucide="truck"></i></div>
+            </div>
+           
+            <div class="grid grid-cols-2 gap-3">
+                <select id="select-autista" class="bg-slate-800 p-4 rounded-2xl text-xs font-bold text-white outline-none">
+                    <option value="">👤 AUTISTA</option>
+                    <!-- Popolato da JS -->
+                </select>
+                <input id="input-targa" class="bg-slate-800 p-4 rounded-2xl text-xs font-bold text-white uppercase outline-none" placeholder="🚛 TARGA">
+            </div>
+        </header>
+
+        <!-- AREA CONTENUTO -->
+        <main id="content" class="p-4 space-y-4">
+            <!-- Il contenuto viene iniettato qui dalle funzioni JS -->
+        </main>
+    </div>
+
+    <!-- NAVIGAZIONE -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-20 flex justify-around items-center px-2 z-50">
+        <button onclick="showTab('viaggio')" class="nav-item flex flex-col items-center gap-1 flex-1 transition-all">
+            <i data-lucide="navigation" size="20"></i><span class="text-[9px] font-bold uppercase">Viaggio</span>
+        </button>
+        <button onclick="showTab('mezzo')" class="nav-item flex flex-col items-center gap-1 flex-1 transition-all">
+            <i data-lucide="settings" size="20"></i><span class="text-[9px] font-bold uppercase">Mezzo</span>
+        </button>
+        <button onclick="showTab('documenti')" class="nav-item flex flex-col items-center gap-1 flex-1 transition-all">
+            <i data-lucide="file-text" size="20"></i><span class="text-[9px] font-bold uppercase">Docs</span>
+        </button>
+        <button onclick="showTab('assenze')" class="nav-item flex flex-col items-center gap-1 flex-1 transition-all">
+            <i data-lucide="calendar" size="20"></i><span class="text-[9px] font-bold uppercase">Assenze</span>
+        </button>
+        <button onclick="showTab('sos')" class="nav-item flex flex-col items-center gap-1 flex-1 transition-all text-red-500">
+            <i data-lucide="alert-octagon" size="20"></i><span class="text-[9px] font-bold uppercase">SOS</span>
+        </button>
+    </nav>
+
+    <script>
+        // CONFIGURAZIONE
+        const POWER_AUTOMATE_URL = ""; // Incolla qui il tuo link di Power Automate
+
+        const autisti = Array.from({length: 46}, (_, i) => `Autista ${i+1}`);
+        const select = document.getElementById('select-autista');
+        autisti.forEach(a => {
+            let opt = document.createElement('option');
+            opt.value = a; opt.innerText = a;
+            select.appendChild(opt);
+        });
+
+        // GESTIONE SCHEDE
+        function showTab(tab) {
+            const container = document.getElementById('content');
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('tab-active'));
+           
+            let html = '';
+
+            switch(tab) {
+                case 'viaggio':
+                    html = `
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="text-[10px] font-black text-blue-600 uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="map"></i> Registrazione Chilometri</h3>
+                            <div class="space-y-3">
+                                <input id="km-inizio" type="number" placeholder="KM Inizio Turno" class="w-full p-4 bg-gray-50 rounded-xl font-bold border-none outline-none">
+                                <input id="km-fine" type="number" placeholder="KM Fine Turno" class="w-full p-4 bg-gray-50 rounded-xl font-bold border-none outline-none">
+                                <button onclick="inviaDati('KM_TURNI', 'Inizio: ' + document.getElementById('km-inizio').value + ' Fine: ' + document.getElementById('km-fine').value)" class="w-full bg-blue-600 text-white p-4 rounded-xl font-black uppercase text-xs">Salva Chilometri</button>
+                            </div>
+                        </div>
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="text-[10px] font-black text-purple-600 uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="clipboard"></i> Distinta Carico</h3>
+                            <div class="flex gap-2">
+                                <input id="distinta" type="text" placeholder="N. Bolla/Distinta" class="flex-1 p-4 bg-gray-50 rounded-xl font-bold border-none outline-none">
+                                <button onclick="inviaDati('DISTINTA', document.getElementById('distinta').value)" class="bg-purple-600 text-white px-6 rounded-xl font-bold"><i data-lucide="send" size="18"></i></button>
+                            </div>
+                        </div>
+                        <div class="bg-emerald-600 p-6 rounded-3xl text-white shadow-lg">
+                            <h3 class="text-[10px] font-black uppercase mb-4 tracking-widest flex items-center gap-2"><i data-lucide="fuel"></i> Rifornimento Gasolio</h3>
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <input id="litri" type="number" placeholder="Litri" class="p-4 bg-white/20 rounded-xl font-bold text-white placeholder:text-white/50 outline-none">
+                                <input id="euro" type="number" placeholder="Euro" class="p-4 bg-white/20 rounded-xl font-bold text-white placeholder:text-white/50 outline-none">
+                            </div>
+                            <button onclick="inviaDati('GASOLIO', document.getElementById('litri').value + 'L - ' + document.getElementById('euro').value + '€')" class="w-full bg-white text-emerald-700 p-4 rounded-xl font-black uppercase text-xs">Registra Pieno</button>
+                        </div>
+                    `;
+                    break;
+                case 'mezzo':
+                    html = `
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="text-[10px] font-black text-orange-600 uppercase mb-6 tracking-widest flex items-center gap-2"><i data-lucide="activity"></i> Controllo Livelli Mezzo</h3>
+                            <div class="space-y-6">
+                                <div><label class="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Livello Olio</label><input type="range" id="olio" class="w-full h-2 bg-gray-100 rounded-lg appearance-none accent-orange-500"></div>
+                                <div><label class="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Stato Gomme</label><input type="range" id="gomme" class="w-full h-2 bg-gray-100 rounded-lg appearance-none accent-orange-500"></div>
+                                <div><label class="text-[10px] font-bold text-gray-400 block mb-2 uppercase">Efficienza Freni</label><input type="range" id="freni" class="w-full h-2 bg-gray-100 rounded-lg appearance-none accent-orange-500"></div>
+                                <button onclick="inviaDati('CHECK_MEZZO', 'Olio:'+document.getElementById('olio').value+'% Gomme:'+document.getElementById('gomme').value+'% Freni:'+document.getElementById('freni').value+'%')" class="w-full bg-orange-500 text-white p-4 rounded-xl font-black uppercase text-xs">Invia Report Stato</button>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="inviaDati('LAVAGGIO', 'ESTERNO')" class="bg-white p-6 rounded-3xl border border-gray-100 flex flex-col items-center gap-2">
+                                <i data-lucide="waves" class="text-blue-500"></i><span class="text-[10px] font-black uppercase text-gray-500">Lav. Esterno</span>
+                            </button>
+                            <button onclick="inviaDati('LAVAGGIO', 'INTERNO')" class="bg-white p-6 rounded-3xl border border-gray-100 flex flex-col items-center gap-2">
+                                <i data-lucide="droplets" class="text-cyan-500"></i><span class="text-[10px] font-black uppercase text-gray-500">Lav. Interno</span>
+                            </button>
+                        </div>
+                    `;
+                    break;
+                case 'documenti':
+                    html = `
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <h3 class="text-[10px] font-black text-blue-600 uppercase mb-6 tracking-widest flex items-center gap-2"><i data-lucide="shield-check"></i> Archivio Documenti Mezzo</h3>
+                            <div class="space-y-4">
+                                ${['Assicurazione', 'Libretto', 'Revisione'].map(doc => `
+                                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                                        <span class="text-xs font-bold text-gray-600">${doc}</span>
+                                        <label class="bg-blue-600 text-white p-2 rounded-lg cursor-pointer">
+                                            <i data-lucide="upload" size="14"></i>
+                                            <input type="file" class="hidden" onchange="inviaFile(this, '${doc}')">
+                                        </label>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'assenze':
+                    html = `
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+                            <h3 class="text-[10px] font-black text-purple-600 uppercase mb-2 tracking-widest flex items-center gap-2"><i data-lucide="calendar"></i> Richiesta Assenza</h3>
+                            <select id="tipo-assenza" class="w-full p-4 bg-gray-50 rounded-xl font-bold border-none outline-none">
+                                <option>Ferie</option>
+                                <option>Permesso</option>
+                                <option>Malattia</option>
+                                <option>Legge 104</option>
+                                <option>Turnover</option>
+                            </select>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="date" id="dal" class="p-3 bg-gray-50 rounded-xl text-xs font-bold">
+                                <input type="date" id="al" class="p-3 bg-gray-50 rounded-xl text-xs font-bold">
+                            </div>
+                            <button onclick="inviaDati('ASSENZA', document.getElementById('tipo-assenza').value + ' dal ' + document.getElementById('dal').value + ' al ' + document.getElementById('al').value)" class="w-full bg-purple-600 text-white p-4 rounded-xl font-black uppercase text-xs">Invia Richiesta</button>
+                        </div>
+                    `;
+                    break;
+                case 'sos':
+                    html = `
+                        <div class="bg-red-600 p-6 rounded-3xl text-white shadow-xl space-y-4">
+                            <div class="text-center">
+                                <i data-lucide="alert-octagon" size="48" class="mx-auto mb-2 animate-pulse"></i>
+                                <h2 class="font-black uppercase text-sm">Emergenza / Incidente</h2>
+                            </div>
+                            <textarea id="nota-sos" placeholder="Descrivi l'accaduto (danni, feriti, guasto)..." class="w-full p-4 rounded-xl bg-white text-gray-900 h-32 text-sm outline-none resize-none"></textarea>
+                            <div class="bg-red-700/50 p-4 rounded-xl border border-red-400/30">
+                                <p class="text-[10px] font-black uppercase mb-3 text-center">Prove Foto / Video</p>
+                                <label class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-white/50 rounded-xl cursor-pointer hover:bg-white/10 transition-all">
+                                    <i data-lucide="camera" size="24"></i>
+                                    <span class="text-[9px] font-bold uppercase mt-2 text-white/70">Scatta Foto o Video</span>
+                                    <input type="file" accept="image/*,video/*" capture="environment" multiple class="hidden" onchange="inviaFile(this, 'FOTO_SINISTRO')">
+                                </label>
+                            </div>
+                            <button onclick="inviaDati('SOS_EMERGENZA', document.getElementById('nota-sos').value)" class="w-full bg-white text-red-600 p-5 rounded-xl font-black uppercase text-sm shadow-xl flex items-center justify-center gap-2">
+                                <i data-lucide="map-pin" size="18"></i> Invia con Posizione GPS
+                            </button>
+                        </div>
+                    `;
+                    break;
+            }
+
+            container.innerHTML = html;
+            lucide.createIcons();
+           
+            // Segna il pulsante attivo
+            const btns = document.querySelectorAll('.nav-item');
+            const index = ['viaggio', 'mezzo', 'documenti', 'assenze', 'sos'].indexOf(tab);
+            if(index !== -1) btns[index].classList.add('tab-active');
+        }
+
+        // INVIO DATI AL CLOUD
+        async function inviaDati(tipo, valore) {
+            const autista = document.getElementById('select-autista').value;
+            const targa = document.getElementById('input-targa').value;
+
+            if(!autista || !targa) {
+                alert("⚠️ Seleziona prima Autista e Targa!");
+                return;
+            }
+
+            document.getElementById('loading').classList.remove('hidden');
+
+            // Recupera GPS
+            let gpsLink = "GPS Non Disponibile";
+            try {
+                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+                gpsLink = `https://www.google.com/maps?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            } catch(e) { console.log("GPS negato"); }
+
+            const payload = {
+                data: new Date().toLocaleDateString('it-IT'),
+                ora: new Date().toLocaleTimeString('it-IT'),
+                autista: autista,
+                targa: targa,
+                operazione: tipo,
+                dettagli: valore,
+                gps: gpsLink
+            };
+
+            console.log("Inviando:", payload);
+
+            try {
+                if(POWER_AUTOMATE_URL) {
+                    await fetch(POWER_AUTOMATE_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                }
+                alert("✅ Dati inviati correttamente!");
+            } catch(e) {
+                alert("📡 Errore di connessione. Riprova.");
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // GESTIONE FILE (PDF / IMMAGINI)
+        function inviaFile(input, tipoDoc) {
+            const file = input.files[0];
+            if(!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Invia il file convertito in testo (Base64)
+                inviaDati("CARICAMENTO_FILE", `Tipo: ${tipoDoc} - Nome: ${file.name} - File: ${e.target.result.substring(0, 100)}...`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Avvio iniziale
+        showTab('viaggio');
+    </script>
+</body>
+</html>
